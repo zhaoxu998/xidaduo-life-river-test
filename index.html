@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>《悉达多》生命之河测试</title>
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --bg: #0e2a1c;
+  --bg-deep: #0a1f15;
+  --gold: #D4AF37;
+  --gold-light: #E8D48B;
+  --gold-dim: rgba(212,175,55,.4);
+  --text: #F5F1E8;
+  --text-dim: rgba(245,241,232,.55);
+  --card-bg: rgba(255,255,255,.04);
+  --card-border: rgba(212,175,55,.18);
+}
+
+body {
+  font-family: "Noto Serif SC", "Source Han Serif CN", "STSong", "Songti SC", -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", serif;
+  background: var(--bg-deep);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── 背景层次 ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 0%, rgba(212,175,55,.06) 0%, transparent 70%),
+    radial-gradient(ellipse 80% 60% at 50% 100%, rgba(18,53,36,.9) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,.35) 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── 动画 ── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes shimmer {
+  0%,100% { opacity: .3; }
+  50% { opacity: .65; }
+}
+@keyframes barGrow {
+  from { width: 0; }
+}
+@keyframes float {
+  0%,100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(1deg); }
+}
+@keyframes glow {
+  0%,100% { box-shadow: 0 0 30px rgba(212,175,55,.2), 0 0 60px rgba(212,175,55,.08); }
+  50% { box-shadow: 0 0 40px rgba(212,175,55,.3), 0 0 80px rgba(212,175,55,.12); }
+}
+@keyframes waveFlow {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+@keyframes breathe {
+  0%,100% { opacity: .6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.02); }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.page {
+  display: none;
+  min-height: 100vh;
+  position: relative;
+  z-index: 1;
+}
+.page.active { display: flex; flex-direction: column; align-items: center; }
+
+/* ═══════════════════════════════════
+   底部波浪装饰（纯CSS）
+   ═══════════════════════════════════ */
+.wave-wrap {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 200%;
+  height: 120px;
+  z-index: 0;
+  pointer-events: none;
+  opacity: .12;
+}
+.wave-wrap svg {
+  width: 100%;
+  height: 100%;
+  animation: waveFlow 12s linear infinite;
+}
+
+/* ── 通用卡片 ── */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 20px;
+  padding: 30px 24px;
+  width: 100%;
+  max-width: 400px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: fadeInScale .5s ease;
+}
+
+/* ── 按钮 ── */
+.btn {
+  display: block;
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto;
+  padding: 16px 0;
+  border: 1px solid var(--gold);
+  border-radius: 40px;
+  background: linear-gradient(135deg, rgba(212,175,55,.08), rgba(212,175,55,.02));
+  color: var(--gold);
+  font-family: inherit;
+  font-size: 16px;
+  letter-spacing: 4px;
+  cursor: pointer;
+  transition: all .35s cubic-bezier(.4,0,.2,1);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(212,175,55,.1), transparent);
+  transition: left .5s ease;
+}
+.btn:hover::before, .btn:active::before {
+  left: 100%;
+}
+.btn:hover, .btn:active {
+  background: linear-gradient(135deg, rgba(212,175,55,.18), rgba(212,175,55,.06));
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(212,175,55,.2);
+  border-color: var(--gold-light);
+  color: var(--gold-light);
+}
+
+/* ── 月亮 ── */
+.moon-wrap {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin-bottom: 36px;
+  animation: float 5s ease-in-out infinite;
+}
+.moon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #F5F1E8 0%, #D4AF37 50%, #8B6914 100%);
+  animation: glow 4s ease-in-out infinite;
+  position: relative;
+}
+.moon::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(18,42,28,.5);
+  filter: blur(3px);
+}
+/* 月亮光环 */
+.moon-ring {
+  position: absolute;
+  inset: -12px;
+  border-radius: 50%;
+  border: 1px solid rgba(212,175,55,.12);
+  animation: breathe 4s ease-in-out infinite;
+}
+.moon-ring:nth-child(2) {
+  inset: -24px;
+  border-color: rgba(212,175,55,.06);
+  animation-delay: 1s;
+}
+
+/* ── 分隔线 ── */
+.divider {
+  width: 60px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  margin: 24px auto;
+  opacity: .5;
+}
+.divider-wide {
+  width: 100%;
+  max-width: 200px;
+}
+
+/* ═══════════════════════════════════
+   首页
+   ═══════════════════════════════════ */
+#start {
+  justify-content: center;
+  padding: 60px 28px 80px;
+  text-align: center;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 5px;
+  background: linear-gradient(180deg, var(--gold-light) 0%, var(--gold) 60%, #8B6914 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 8px;
+  animation: fadeIn .7s ease;
+  line-height: 1.5;
+}
+.title-sub {
+  font-size: 14px;
+  color: var(--gold-dim);
+  letter-spacing: 6px;
+  margin-bottom: 0;
+  animation: fadeIn .8s ease;
+}
+.subtitle {
+  font-size: 15px;
+  color: var(--text-dim);
+  margin-bottom: 48px;
+  letter-spacing: 1.5px;
+  line-height: 1.8;
+  animation: fadeIn .9s ease;
+}
+.footer-note {
+  position: fixed;
+  bottom: 28px;
+  left: 0; right: 0;
+  text-align: center;
+  font-size: 12px;
+  color: rgba(245,241,232,.25);
+  letter-spacing: 2px;
+  animation: shimmer 4s ease-in-out infinite;
+}
+
+/* ═══════════════════════════════════
+   测试页
+   ═══════════════════════════════════ */
+#quiz {
+  padding: 52px 22px 40px;
+  gap: 0;
+}
+
+.quiz-header {
+  width: 100%;
+  max-width: 400px;
+  margin-bottom: 8px;
+}
+.progress-bar-wrap {
+  width: 100%;
+  height: 2px;
+  background: rgba(245,241,232,.08);
+  border-radius: 2px;
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #8B6914, var(--gold), var(--gold-light));
+  border-radius: 2px;
+  transition: width .5s cubic-bezier(.4,0,.2,1);
+  box-shadow: 0 0 8px rgba(212,175,55,.3);
+}
+.progress-text {
+  font-size: 11px;
+  color: rgba(245,241,232,.35);
+  margin-bottom: 32px;
+  letter-spacing: 2px;
+  text-align: center;
+}
+
+.q-text {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.8;
+  margin-bottom: 32px;
+  text-align: center;
+  max-width: 400px;
+  animation: fadeIn .4s ease;
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 400px;
+}
+.opt {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px 20px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all .3s cubic-bezier(.4,0,.2,1);
+  animation: fadeIn .4s ease both;
+  text-align: left;
+  position: relative;
+  overflow: hidden;
+}
+.opt::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(212,175,55,.06), transparent);
+  opacity: 0;
+  transition: opacity .3s ease;
+}
+.opt:hover::before, .opt:active::before {
+  opacity: 1;
+}
+.opt:nth-child(1) { animation-delay: .05s; }
+.opt:nth-child(2) { animation-delay: .1s; }
+.opt:nth-child(3) { animation-delay: .15s; }
+.opt:nth-child(4) { animation-delay: .2s; }
+.opt:active {
+  border-color: var(--gold);
+  transform: scale(.98);
+  box-shadow: 0 4px 20px rgba(212,175,55,.1);
+}
+.opt-label {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid rgba(212,175,55,.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: var(--gold);
+  margin-top: 1px;
+  transition: all .3s ease;
+  position: relative;
+  z-index: 1;
+}
+.opt:active .opt-label {
+  background: var(--gold);
+  color: var(--bg-deep);
+  border-color: var(--gold);
+}
+.opt-text {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--text);
+  position: relative;
+  z-index: 1;
+}
+
+/* ═══════════════════════════════════
+   结果页
+   ═══════════════════════════════════ */
+#result {
+  padding: 48px 22px 56px;
+  gap: 0;
+}
+
+.result-title {
+  font-size: 12px;
+  color: var(--text-dim);
+  letter-spacing: 4px;
+  margin-bottom: 20px;
+  animation: fadeIn .4s ease;
+}
+
+.state-emoji {
+  font-size: 48px;
+  text-align: center;
+  margin-bottom: 12px;
+  animation: fadeInScale .6s ease;
+  line-height: 1.3;
+}
+
+.main-state {
+  font-size: 32px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 6px;
+  animation: fadeIn .7s ease;
+  background: linear-gradient(180deg, var(--gold-light), var(--gold));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.sub-state {
+  font-size: 16px;
+  color: var(--text-dim);
+  text-align: center;
+  margin-bottom: 32px;
+  animation: fadeIn .8s ease;
+  letter-spacing: 3px;
+}
+
+/* 关键词标签 */
+.keywords {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 32px;
+  animation: fadeIn .9s ease;
+  max-width: 400px;
+}
+.keyword-tag {
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  letter-spacing: 1px;
+  border: 1px solid;
+}
+
+/* 进度条维度 */
+.bars {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-bottom: 32px;
+}
+.bar-item {
+  animation: slideUp .5s ease both;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+.bar-item:nth-child(1) { animation-delay: .1s; }
+.bar-item:nth-child(2) { animation-delay: .18s; }
+.bar-item:nth-child(3) { animation-delay: .26s; }
+.bar-item:nth-child(4) { animation-delay: .34s; }
+.bar-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  margin-bottom: 8px;
+  color: rgba(245,241,232,.75);
+}
+.bar-label span:last-child {
+  color: var(--gold);
+  font-weight: 600;
+  font-size: 14px;
+}
+.bar-track {
+  height: 6px;
+  background: rgba(245,241,232,.08);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  animation: barGrow 1s cubic-bezier(.4,0,.2,1) both;
+  position: relative;
+}
+.bar-fill::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 20px;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.3));
+  border-radius: 0 3px 3px 0;
+}
+
+/* 解析卡片 */
+.analysis-card {
+  width: 100%;
+  max-width: 400px;
+  margin-bottom: 24px;
+  animation: fadeIn .6s ease both;
+  animation-delay: .4s;
+}
+.analysis-card h3 {
+  font-size: 14px;
+  color: var(--gold);
+  margin-bottom: 14px;
+  letter-spacing: 2px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.analysis-card h3::before {
+  content: '';
+  width: 16px;
+  height: 1px;
+  background: var(--gold);
+  opacity: .5;
+}
+.analysis-card p {
+  font-size: 14px;
+  line-height: 2;
+  color: rgba(245,241,232,.8);
+  text-indent: 2em;
+}
+
+/* 糖果卡片 */
+.candy-card {
+  width: 100%;
+  max-width: 400px;
+  padding: 24px;
+  background: linear-gradient(135deg, rgba(212,175,55,.06), rgba(212,175,55,.02));
+  border: 1px solid rgba(212,175,55,.2);
+  border-radius: 20px;
+  text-align: center;
+  margin-bottom: 16px;
+  animation: fadeIn .5s ease both;
+  transition: transform .3s ease;
+}
+.candy-card:active {
+  transform: scale(.98);
+}
+.candy-emoji {
+  font-size: 40px;
+  margin-bottom: 10px;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,.2));
+}
+.candy-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--gold);
+  margin-bottom: 6px;
+  letter-spacing: 1px;
+}
+.candy-desc {
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.7;
+}
+
+/* 特殊奖励 */
+.special-badge {
+  width: 100%;
+  max-width: 400px;
+  padding: 24px;
+  border-radius: 20px;
+  text-align: center;
+  margin-bottom: 16px;
+  animation: fadeInScale .6s ease;
+}
+.special-badge h3 {
+  font-size: 22px;
+  margin-bottom: 10px;
+}
+.special-badge p {
+  font-size: 14px;
+  line-height: 1.8;
+  color: rgba(245,241,232,.85);
+}
+.special-badge .special-candy {
+  margin-top: 14px;
+  font-size: 14px;
+  color: var(--gold);
+  font-weight: 600;
+  padding-top: 12px;
+  border-top: 1px solid rgba(245,241,232,.1);
+}
+
+.btn-restart {
+  margin-top: 20px;
+  animation: fadeIn .6s ease both;
+  animation-delay: .5s;
+}
+
+/* 汇流 */
+.badge-huiliu {
+  background: linear-gradient(135deg, rgba(212,175,55,.1), rgba(255,180,80,.06));
+  border: 1px solid rgba(212,175,55,.3);
+}
+/* 入海 */
+.badge-ruhai {
+  background: linear-gradient(135deg, rgba(100,180,220,.08), rgba(160,220,180,.06));
+  border: 1px solid rgba(120,200,180,.25);
+}
+
+/* ── 结果页装饰 ── */
+.result-decoration {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  height: 1px;
+  margin: 8px auto 24px;
+  background: linear-gradient(90deg, transparent, rgba(212,175,55,.2), transparent);
+}
+.result-decoration::before,
+.result-decoration::after {
+  content: '·';
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--gold);
+  opacity: .3;
+  font-size: 18px;
+}
+.result-decoration::before { left: 30%; }
+.result-decoration::after { right: 30%; }
+
+/* ── 响应式 ── */
+@media (max-width: 360px) {
+  .title { font-size: 24px; letter-spacing: 3px; }
+  .main-state { font-size: 28px; }
+  .q-text { font-size: 16px; }
+  .moon-wrap { width: 64px; height: 64px; }
+  .moon { width: 64px; height: 64px; }
+}
+@media (min-width: 500px) {
+  .title { font-size: 32px; }
+}
+</style>
+</head>
+<body>
+
+<!-- 底部波浪 -->
+<div class="wave-wrap">
+  <svg viewBox="0 0 1440 120" preserveAspectRatio="none">
+    <path d="M0,60 C240,100 480,20 720,60 C960,100 1200,20 1440,60 L1440,120 L0,120 Z" fill="rgba(212,175,55,.3)"/>
+    <path d="M0,80 C360,40 720,100 1080,60 C1260,40 1380,70 1440,80 L1440,120 L0,120 Z" fill="rgba(212,175,55,.15)"/>
+  </svg>
+</div>
+
+<!-- ═══ 首页 ═══ -->
+<div id="start" class="page active">
+  <div class="moon-wrap">
+    <div class="moon-ring"></div>
+    <div class="moon-ring"></div>
+    <div class="moon"></div>
+  </div>
+  <div class="title">《悉达多》</div>
+  <div class="title-sub">生 命 之 河 测 试</div>
+  <div class="divider divider-wide"></div>
+  <div class="subtitle">你此刻，正流经生命的哪一段河流？</div>
+  <button class="btn" onclick="startQuiz()">开 始 测 试</button>
+  <div class="footer-note">河流从不停留，人也如此。</div>
+</div>
+
+<!-- ═══ 测试页 ═══ -->
+<div id="quiz" class="page">
+  <div class="quiz-header">
+    <div class="progress-bar-wrap">
+      <div class="progress-bar" id="pbar"></div>
+    </div>
+    <div class="progress-text" id="ptxt"></div>
+  </div>
+  <div class="q-text" id="qtext"></div>
+  <div class="options" id="opts"></div>
+</div>
+
+<!-- ═══ 结果页 ═══ -->
+<div id="result" class="page">
+  <div class="result-title">你 的 生 命 状 态</div>
+  <div class="state-emoji" id="rEmoji"></div>
+  <div class="main-state" id="rMain"></div>
+  <div class="sub-state" id="rSub"></div>
+  <div class="keywords" id="rKeywords"></div>
+  <div class="result-decoration"></div>
+  <div class="bars" id="rBars"></div>
+  <div id="rSpecial"></div>
+  <div id="rAnalysis"></div>
+  <div id="rCandy"></div>
+  <button class="btn btn-restart" onclick="restart()">重 新 测 试</button>
+</div>
+
+<script>
+/* ═══════════════════════════════════
+   数据
+   ═══════════════════════════════════ */
+var SCORES = [
+  /* Q1 */ [
+    {main:'source',sub:'ferry'},
+    {main:'rapids',sub:'source'},
+    {main:'vortex',sub:'source'},
+    {main:'ferry',sub:'rapids'}
+  ],
+  /* Q2 */ [
+    {main:'source',sub:'ferry'},
+    {main:'rapids',sub:'source'},
+    {main:'vortex',sub:'rapids'},
+    {main:'ferry',sub:'vortex'}
+  ],
+  /* Q3 */ [
+    {main:'source',sub:'vortex'},
+    {main:'rapids',sub:'ferry'},
+    {main:'vortex',sub:'source'},
+    {main:'ferry',sub:'rapids'}
+  ],
+  /* Q4 */ [
+    {main:'source',sub:'ferry'},
+    {main:'rapids',sub:'source'},
+    {main:'vortex',sub:'source'},
+    {main:'ferry',sub:'rapids'}
+  ],
+  /* Q5 */ [
+    {main:'source',sub:'ferry'},
+    {main:'rapids',sub:'source'},
+    {main:'vortex',sub:'ferry'},
+    {main:'ferry',sub:'vortex'}
+  ],
+  /* Q6 */ [
+    {main:'source',sub:'ferry'},
+    {main:'rapids',sub:'source'},
+    {main:'vortex',sub:'source'},
+    {main:'ferry',sub:'rapids'}
+  ],
+  /* Q7 */ [
+    {main:'source',sub:'ferry'},
+    {main:'rapids',sub:'ferry'},
+    {main:'vortex',sub:'source'},
+    {main:'ferry',sub:'rapids'}
+  ],
+  /* Q8 */ [
+    {main:'source',sub:'ferry'},
+    {main:'rapids',sub:'source'},
+    {main:'vortex',sub:'source'},
+    {main:'ferry',sub:'vortex'}
+  ]
+];
+
+var QUESTIONS = [
+  "当一个问题长期困扰你时，你更倾向于：",
+  "如果突然获得一周完全自由的时间：",
+  "面对人生的重要选择：",
+  "哪句话最打动你：",
+  "朋友向你倾诉烦恼时：",
+  "你最想获得：",
+  "面对失败：",
+  "此刻的你更像："
+];
+
+var OPTIONS = [
+  ["寻找更深层的答案","阅读书籍或请教前辈","通过亲身经历寻找答案","接受暂时没有答案"],
+  ["独处思考未来","学习新知识新技能","旅行聚会体验新鲜事","慢下来观察生活"],
+  ["遵循内心声音","参考成功经验","先行动再调整","等待时机成熟"],
+  ["我想知道为什么而活","站在巨人的肩膀上","人生重在体验","万物自有其时"],
+  ["帮助他寻找根源","分享解决方法","陪他一起经历","安静倾听"],
+  ["生命的意义","持续成长的能力","丰富而真实的人生","平静与通透"],
+  ["思考它带来的启示","复盘方法和经验","接受情绪继续前进","相信时间会给出答案"],
+  ["站在山顶眺望远方的人","背着书包赶路的人","走进人群体验世界的人","坐在河边听水流的人"]
+];
+
+var LABELS = ['A','B','C','D'];
+
+var STATE_INFO = {
+  source: { emoji:'🌄', name:'源头', sub:'寻道', candy:'金桔百香果', candyEmoji:'🍋', candyDesc:'少年悉达多的探索精神，金黄如初升的太阳', color:'#E8B830', colorBg:'rgba(232,184,48,.08)', colorBorder:'rgba(232,184,48,.25)', who:'少年悉达多', keywords:['不满足现状','追问意义','理想主义','自我探索'] },
+  rapids: { emoji:'📚', name:'激流', sub:'求法', candy:'青梅绿茶', candyEmoji:'🍵', candyDesc:'乔文达的勤勉与求索，清新如山间溪流', color:'#6BAF7A', colorBg:'rgba(107,175,122,.08)', colorBorder:'rgba(107,175,122,.25)', who:'乔文达', keywords:['学习成长','借鉴经验','寻找方向','相信方法'] },
+  vortex: { emoji:'🌺', name:'漩涡', sub:'入世', candy:'杨枝甘露', candyEmoji:'🥭', candyDesc:'入世悉达多的热烈体验，浓郁如热带果实', color:'#E8943A', colorBg:'rgba(232,148,58,.08)', colorBorder:'rgba(232,148,58,.25)', who:'入世时期的悉达多', keywords:['体验人生','情感丰富','热爱生活','亲身经历'] },
+  ferry: { emoji:'🌊', name:'渡口', sub:'观河', candy:'芭乐冰柠', candyEmoji:'🍈', candyDesc:'瓦苏提婆的通透与宁静，淡雅如河畔清风', color:'#9CC9A8', colorBg:'rgba(156,201,168,.08)', colorBorder:'rgba(156,201,168,.25)', who:'瓦苏提婆', keywords:['观察','接纳','沉淀','理解'] }
+};
+
+var ANALYSES = {
+  "source-rapids": "你体内流淌着两种力量——对根源的追问与对方法的信赖。你既渴望理解生命为何如此，又愿意向先行者学习如何前行。悉达多在林中苦修时也曾如此，他追寻觉悟的本质，同时也尊重每一条被验证的道路。你正走在一条既仰望星空又脚踏实地的路上。此刻的你，需要的不是选择哪条河，而是相信两条河流终将汇合。",
+  "source-vortex": "源头的追问与漩涡的体验在你心中交汇。你是那种既想弄明白「为什么」又忍不住亲自去试一试的人。悉达多离开沙门之后走进尘世，正是这种冲动——理论再完美，不如真真切切活一场。你在思考与行动之间摇摆，却也因此拥有了难得的完整性。别怕这种拉扯，它正是你生命力的证明。",
+  "source-ferry": "你拥有源头的洞察与渡口的沉静。这是悉达多在河边最终领悟的状态——既保持着对生命本质的好奇，又学会了不急于给出答案。你能在喧嚣中退后一步，在纷乱中看到河流本来的样子。这种组合并不常见，它意味着你正走向一种成熟的智慧：不再执着于找到答案，而是成为那个能容纳问题的人。",
+  "rapids-vortex": "激流的求学精神与漩涡的入世热情在你身上并行。你像年轻时的悉达多一样，既愿意向老师请教，也渴望在红尘中亲自验证。书本上的智慧和街头的经验对你来说同样珍贵。你的人生不是一条直线，而是一条不断交汇的河流——每一段经历都在丰富你的河道。保持这份饥渴，它会带你去该去的地方。",
+  "rapids-ferry": "你是务实的观察者。激流教会你从经验中提炼智慧，渡口教会你等待与接纳。你不会盲目冲锋，也不会无所作为——你在学习中沉淀，在沉淀中精进。瓦苏提婆听河水的声音，乔文达记录师父的教诲，而你同时拥有两者。你的河流不急不缓，但始终在向前。耐心是你最大的天赋。",
+  "vortex-ferry": "漩涡的热烈与渡口的淡然在你身上构成了一种迷人的张力。你既能全情投入生活的每一个细节，又能在某个时刻抽身而出，像旁观者一样审视一切。这正是悉达多从商人重新变回河边倾听者的历程。你比自己以为的更通透——那些经历不是消耗，而是你理解世界的素材。",
+  "source-source": "你正处在生命最纯粹的追寻之中。源头的力量在你体内不断涌动，推动你一次次追问存在的意义。这是一种勇者的状态——你不满足于现成的答案，宁愿自己去寻找。悉达多年轻时也是如此，他放下了婆罗门的一切去追问「我」是什么。这份执着是珍贵的，但别忘了：河流不止在源头，它还要向前流。",
+  "rapids-rapids": "你是一个纯粹的学习者与成长者。你相信方法的力量，尊重前人的智慧，愿意一步一步地积累。乔文达追随悉达多的每一步，正是这种精神。你的优势在于系统与耐心，你的河流稳定而有力。但河水若只在渠道中流淌，便看不到大海的辽阔。也许此刻，你需要偶尔允许自己迷一次路。",
+  "vortex-vortex": "你是一条奔涌的河流，充满了对生活的热爱与体验的渴望。你用全部感官拥抱世界，不设防、不退缩。入世时期的悉达多也曾如此——他沉醉于财富、爱情与感官的盛宴。这种热烈是你最大的财富，但也请记得：漩涡的力量在于旋转，而不在于被卷走。偶尔停下来，听听河水在说什么。",
+  "ferry-ferry": "你已经抵达了河流的渡口。观察、接纳、沉淀——这些品质在你身上已经成熟。瓦苏提婆不需要说话，河水本身就是他的教诲。你也许是人群中那个最安静的人，但安静不代表空白，那里面有整条河流的回响。你的智慧不需要向外证明，它会在你身边自然流淌，被需要的人接住。"
+};
+
+/* ═══════════════════════════════════
+   状态
+   ═══════════════════════════════════ */
+var cur = 0;
+var scores = { source:0, rapids:0, vortex:0, ferry:0 };
+
+function show(id) {
+  document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function startQuiz() {
+  cur = 0;
+  scores = { source:0, rapids:0, vortex:0, ferry:0 };
+  show('quiz');
+  renderQ();
+}
+
+function renderQ() {
+  var pct = ((cur) / 8) * 100;
+  document.getElementById('pbar').style.width = pct + '%';
+  document.getElementById('ptxt').textContent = '第 ' + (cur+1) + ' 题 / 共 8 题';
+  document.getElementById('qtext').textContent = QUESTIONS[cur];
+
+  var optsHtml = '';
+  for (var i = 0; i < 4; i++) {
+    optsHtml += '<div class="opt" onclick="choose('+i+')" style="animation-delay:'+(i*0.06)+'s">' +
+      '<div class="opt-label">'+LABELS[i]+'</div>' +
+      '<div class="opt-text">'+OPTIONS[cur][i]+'</div></div>';
+  }
+  document.getElementById('opts').innerHTML = optsHtml;
+}
+
+function choose(idx) {
+  var sc = SCORES[cur][idx];
+  scores[sc.main] += 2;
+  scores[sc.sub] += 1;
+  cur++;
+
+  if (cur < 8) {
+    renderQ();
+  } else {
+    showResult();
+  }
+}
+
+function showResult() {
+  document.getElementById('pbar').style.width = '100%';
+
+  var total = scores.source + scores.rapids + scores.vortex + scores.ferry;
+  var pcts = {};
+  var keys = ['source','rapids','vortex','ferry'];
+  keys.forEach(function(k){ pcts[k] = total > 0 ? Math.round(scores[k]/total*100) : 0; });
+
+  var sorted = keys.slice().sort(function(a,b){ return pcts[b] - pcts[a]; });
+  var first = sorted[0], second = sorted[1];
+
+  var s1 = STATE_INFO[first], s2 = STATE_INFO[second];
+
+  /* 主/副状态 */
+  document.getElementById('rEmoji').textContent = s1.emoji + '  ×  ' + s2.emoji;
+  document.getElementById('rMain').textContent = s1.name + '  ×  ' + s2.name;
+  document.getElementById('rSub').textContent = s1.sub + '  ×  ' + s2.sub;
+
+  /* 关键词标签 */
+  var kwHtml = '';
+  s1.keywords.forEach(function(kw) {
+    kwHtml += '<span class="keyword-tag" style="color:'+s1.color+';border-color:'+s1.colorBorder+';background:'+s1.colorBg+'">'+kw+'</span>';
+  });
+  document.getElementById('rKeywords').innerHTML = kwHtml;
+
+  /* 进度条 */
+  var barColors = { source:'#E8B830', rapids:'#6BAF7A', vortex:'#E8943A', ferry:'#9CC9A8' };
+  var barLabels = { source:'源头', rapids:'激流', vortex:'漩涡', ferry:'渡口' };
+  var barEmojis = { source:'🌄', rapids:'📚', vortex:'🌺', ferry:'🌊' };
+  var barsHtml = '';
+  keys.forEach(function(k){
+    barsHtml += '<div class="bar-item"><div class="bar-label"><span>'+barEmojis[k]+' '+barLabels[k]+'</span><span>'+pcts[k]+'%</span></div>' +
+      '<div class="bar-track"><div class="bar-fill" style="width:'+pcts[k]+'%;background:linear-gradient(90deg,'+barColors[k]+'88,'+barColors[k]+')"></div></div></div>';
+  });
+  document.getElementById('rBars').innerHTML = barsHtml;
+
+  /* 特殊奖励 */
+  var specials = '';
+  var gap12 = Math.abs(pcts[first] - pcts[second]);
+  var maxPct = pcts[first], minPct = Math.min.apply(null, keys.map(function(k){ return pcts[k]; }));
+  var gapAll = maxPct - minPct;
+
+  if (gap12 <= 10) {
+    specials += '<div class="special-badge badge-huiliu"><h3>🌅 汇流</h3><p>多条河流正在你体内交汇。<br>你正处于变化与融合之中。</p><div class="special-candy">额外奖励：🍊 茉莉沙田柚</div></div>';
+  }
+  if (gapAll <= 10) {
+    specials += '<div class="special-badge badge-ruhai"><h3>🌌 入海</h3><p>河流最终都会汇入大海。<br>你展现出了少见的平衡与包容。</p><div class="special-candy">额外奖励：🍑 白桃薄荷糖</div></div>';
+  }
+  document.getElementById('rSpecial').innerHTML = specials;
+
+  /* 双状态解析 */
+  var key1 = first + '-' + second;
+  var key2 = second + '-' + first;
+  var analysis = ANALYSES[key1] || ANALYSES[key2] || '';
+  document.getElementById('rAnalysis').innerHTML = '<div class="card analysis-card"><h3>📖 状态解析</h3><p>' + analysis + '</p></div>';
+
+  /* 对应糖果 */
+  var candyList = '';
+  candyList += '<div class="candy-card"><div class="candy-emoji">'+s1.candyEmoji+'</div><div class="candy-name">'+s1.candy+'</div><div class="candy-desc">'+s1.candyDesc+'</div></div>';
+  if (first !== second) {
+    candyList += '<div class="candy-card"><div class="candy-emoji">'+s2.candyEmoji+'</div><div class="candy-name">'+s2.candy+'</div><div class="candy-desc">'+s2.candyDesc+'</div></div>';
+  }
+  document.getElementById('rCandy').innerHTML = candyList;
+
+  show('result');
+}
+
+function restart() {
+  show('start');
+}
+</script>
+</body>
+</html>
